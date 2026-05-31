@@ -1,0 +1,76 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+*.egg
+*.egg-info/
+dist/
+build/
+.eggs/
+.Python
+pip-wheel-metadata/
+
+# Virtual environments
+.env
+.venv
+env/
+venv/
+ENV/
+
+# Secrets & credentials (NEVER commit)
+*.env
+.env.*
+secrets.toml
+.streamlit/secrets.toml
+
+# Database files (runtime data — never commit)
+*.db
+*.sqlite
+*.sqlite3
+*.db-shm
+*.db-wal
+database/hfos_production.db*
+hfos.db
+
+# Source specification documents (binary)
+*.docx
+*.pdf
+code_extracted.txt
+
+# Coverage & test artifacts
+.coverage
+htmlcov/
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+
+# IDE
+.vscode/
+.idea/
+*.iml
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Logs
+*.log
+logs/
+
+# Node (if any frontend build)
+node_modules/
+npm-debug.log*
+
+# Streamlit cache
+.streamlit/
+
+# Scripts (audit/forensic tools — not production)
+scripts/
+
+# Large data files
+*.parquet
+*.feather
+*.hdf5
+data/raw/

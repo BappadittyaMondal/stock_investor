@@ -1,0 +1,31 @@
+version: '3.8'
+
+services:
+  hfos:
+    build:
+      context: ..
+      dockerfile: Dockerfile
+    container_name: hfos_platform
+    ports:
+      - "8501:8501"
+    volumes:
+      - hfos_data:/app/database
+      - hfos_logs:/app/logs
+    env_file:
+      - ../.env
+    restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+    read_only: false # Needed to write to the local SQLite DB inside database/
+    cap_drop:
+      - ALL
+    cap_add:
+      - CHOWN
+      - SETUID
+      - SETGID
+
+volumes:
+  hfos_data:
+    driver: local
+  hfos_logs:
+    driver: local

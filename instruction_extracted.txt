@@ -1,0 +1,47 @@
+ 
+HFOS
+HEDGE-FUND OPERATING SYSTEM
+v5.0  —  Multi-Agent Orchestration Prompt & Pipeline
+ 
+Sequential  |  Each agent builds on the last  |  Final output is a realistic, executable institutional blueprint
+Indian Equity Markets  |  Retail to Institutional Grade  |  Zero-Cost MVP to Scaled System
+
+HOW TO USE THIS MULTI-AGENT SYSTEM
+ 
+ 
+Step-by-Step Execution Protocol
+ 
+ 
+When to Re-Run the Pipeline
+ 
+
+SECTION 1  MASTER CONTEXT BLOCK
+ 
+ 
+
+ 
+ 
+ 
+
+ 
+ 
+ 
+
+ 
+ 
+ 
+
+ 
+ 
+
+SECTION 6  COMPLETE PIPELINE — QUICK REFERENCE
+ 
+Sequential Agent Pipeline Flow
+ 
+ 
+What Each Agent Produces — At a Glance
+ 
+ 
+Critical Principles — Never Violate These
+ 
+ 
