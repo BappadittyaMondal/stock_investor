@@ -23,9 +23,12 @@ def _require_env(key: str, min_len: int = 1) -> str:
 
 
 # ---------------------------------------------------------------------------
-# Database
+# Database & Supabase
 # ---------------------------------------------------------------------------
 DB_PATH: str = os.environ.get("DB_PATH", str(BASE_DIR / "hfos.db"))
+
+SUPABASE_URL: str = os.environ.get("SUPABASE_URL", "")
+SUPABASE_KEY: str = os.environ.get("SUPABASE_KEY", "")
 
 # ---------------------------------------------------------------------------
 # JWT / Auth
