@@ -8,10 +8,9 @@ from datetime import date
 
 from database.db_manager import execute_write, execute_one
 from config.settings import (
-    ANTHROPIC_API_KEY, ANTHROPIC_MODEL,
-    AI_DAILY_LIMIT_INR, AI_MONTHLY_LIMIT_INR,
-    CLAUDE_INR_PER_1K_IN, CLAUDE_INR_PER_1K_OUT
+    GOOGLE_API_KEY, AI_DAILY_LIMIT_INR, AI_MONTHLY_LIMIT_INR
 )
+from providers.gemini_provider import GeminiProvider
 
 logger = logging.getLogger(__name__)
 
@@ -31,18 +30,9 @@ Always include: NOT SEBI Registered | Private Research | Not Investment Advice.
 Be concise, data-driven, and risk-aware. Format outputs in clear sections."""
 
     def __init__(self):
-        if not ANTHROPIC_API_KEY:
-            logger.warning("ANTHROPIC_API_KEY not set — AI Copilot disabled")
-        self._client = None
-
-    def _get_client(self):
-        if self._client is None:
-            try:
-                import anthropic
-                self._client = anthropic.Anthropic(api_key=ANTHROPIC_API_KEY)
-            except ImportError:
-                raise RuntimeError("anthropic package not installed. Run: pip install anthropic")
-        return self._client
+        if not GOOGLE_API_KEY:
+            logger.warning("GOOGLE_API_KEY not set — AI Copilot disabled")
+        self.provider = GeminiProvider()
 
     # -------------------------------------------------------------------------
     # PUBLIC
@@ -104,31 +94,19 @@ Be concise — max 400 words."""
     # PRIVATE
     # -------------------------------------------------------------------------
     def _query(self, prompt: str, task: str = "general") -> str:
-        """Execute Claude API call with cost tracking and circuit breaker."""
-        if not ANTHROPIC_API_KEY:
-            return "⚠️ AI Copilot unavailable: ANTHROPIC_API_KEY not configured."
+        """Execute AI query with cost tracking and circuit breaker."""
+        if not GOOGLE_API_KEY:
+            return "⚠️ AI Copilot unavailable: GOOGLE_API_KEY not configured."
 
         # Check cost circuit breaker
         if self._budget_exceeded():
             return "⚠️ AI budget limit reached. Copilot paused until reset."
 
         try:
-            client = self._get_client()
-            response = client.messages.create(
-                model=ANTHROPIC_MODEL,
-                max_tokens=1024,
-                system=self.SYSTEM_PROMPT,
-                messages=[{"role": "user", "content": prompt}]
-            )
-            text     = response.content[0].text
-            tokens_in  = response.usage.input_tokens
-            tokens_out = response.usage.output_tokens
-            cost_inr   = (tokens_in  / 1000 * CLAUDE_INR_PER_1K_IN +
-                          tokens_out / 1000 * CLAUDE_INR_PER_1K_OUT)
-
-            self._record_cost(task, tokens_in, tokens_out, cost_inr)
-            logger.info(f"AI query [{task}]: {tokens_in}in/{tokens_out}out ₹{cost_inr:.4f}")
-            return text
+            res = self.provider.query(prompt, self.SYSTEM_PROMPT)
+            self._record_cost(task, res["tokens_in"], res["tokens_out"], res["cost_inr"], res.get("model_name", "gemini"))
+            logger.info(f"AI query [{task}]: {res['tokens_in']}in/{res['tokens_out']}out ₹{res['cost_inr']:.4f}")
+            return res["text"]
 
         except Exception as e:
             logger.error(f"AI Copilot error [{task}]: {e}")
@@ -161,10 +139,10 @@ Be concise — max 400 words."""
         except Exception:
             return False  # fail open — prefer usability
 
-    def _record_cost(self, task: str, tokens_in: int, tokens_out: int, cost_inr: float):
+    def _record_cost(self, task: str, tokens_in: int, tokens_out: int, cost_inr: float, model: str):
         execute_write(
             "INSERT INTO api_costs(model,task,tokens_in,tokens_out,cost_inr) VALUES(?,?,?,?,?)",
-            (ANTHROPIC_MODEL, task, tokens_in, tokens_out, round(cost_inr, 6))
+            (model, task, tokens_in, tokens_out, round(cost_inr, 6))
         )
 
     def get_monthly_spend(self) -> float:

@@ -47,7 +47,7 @@ class DataFetcher:
     """
 
     def __init__(self, db_path: Optional[str] = None):
-        pass  # db_path managed via settings
+        self._db_path = db_path  # retained for compatibility; path comes from settings
 
     # -------------------------------------------------------------------------
     # PUBLIC

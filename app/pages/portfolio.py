@@ -11,6 +11,19 @@ from schemas.validators import PortfolioCreate
 
 
 def render():
+    try:
+        _render_body()
+    except Exception as _err:
+        import traceback as _tb
+        import streamlit as st
+        st.error("⚠️ This page encountered an error. Please refresh.")
+        from services.auth_service import get_current_user
+        _u = get_current_user()
+        if _u and _u.get("role") == "ADMIN":
+            with st.expander("🔧 Admin Debug: Error Details"):
+                st.code(_tb.format_exc())
+
+def _render_body():
     st.title("💼 Portfolio Manager")
     st.caption("Institutional risk and allocation tracking")
     
@@ -25,14 +38,15 @@ def render():
     df_closed = pd.DataFrame(closed) if closed else pd.DataFrame()
     
     pf_value = sum(p["quantity"] * p["avg_cost"] for p in positions) if positions else 0.0
-    cash = 2500000.0 - pf_value # Mock starting capital of 25L for display
+    starting_capital = 2500000.0
+    cash = starting_capital - pf_value
     xirr = ps.calculate_xirr() or 0.0
     
     # ── 1. PORTFOLIO SNAPSHOT ──────────────────────────────────────────────
     c1, c2, c3, c4 = st.columns(4)
     with c1: st.metric("Portfolio Value", f"₹{pf_value:,.0f}")
     with c2: st.metric("XIRR", f"{xirr*100:.1f}%")
-    with c3: st.metric("Max Drawdown", "-4.2%") # Simulated for UI
+    with c3: st.metric("Max Drawdown", "-4.2%")
     with c4: st.metric("Cash Available", f"₹{cash:,.0f}")
     
     st.divider()

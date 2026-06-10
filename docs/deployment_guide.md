@@ -1,40 +1,23 @@
-# HFOS v5.0 — Deployment Guide
+# HFOS v5.0 - Deployment Guide
 
-## 1. Environment Preparation
-Ensure the host has Docker and Docker Compose installed (or Python 3.11+ for bare-metal).
+## Local Startup
+1. Copy `.env.example` to `.env`
+2. Set `HFOS_JWT_SECRET`
+3. Set alert and AI credentials if those features are required
+4. Initialize the database through the app bootstrap path
+5. Start the Streamlit app from `main.py`
 
-```bash
-cp .env.example .env
-```
-Edit `.env` and configure:
-- `HFOS_JWT_SECRET` (Must be cryptographically secure, >= 32 chars)
-- `ANTHROPIC_API_KEY` (Required for AI Copilot)
-- `TELEGRAM_BOT_TOKEN` & `TELEGRAM_CHAT_ID` (Required for alerts)
+## Docker Startup
+- Build with the repository `Dockerfile`
+- Run with `deployment/docker-compose.yml`
+- Persist the SQLite volume and logs volume
 
-## 2. Docker Deployment (Recommended)
-```bash
-make build
-make docker-up
-```
-The application will be accessible at `http://localhost:8501`.
-Data and logs are persisted in named Docker volumes (`hfos_data`, `hfos_logs`).
+## Operational Notes
+- `main.py` bootstraps schema initialization and scheduler startup.
+- `api/rest_api.py` runs as an internal HTTP service.
+- Background jobs are scheduler-driven; ensure the process remains alive.
 
-## 3. Bare-Metal Deployment
-If running without Docker:
-```bash
-pip install -r requirements.txt
-make init-db
-make run
-```
-
-## 4. Post-Deployment Steps
-1. Navigate to `http://localhost:8501`.
-2. Login (create admin user via DB or wait for first-run prompt if configured).
-3. Navigate to **Settings**.
-4. Upload `stocks.csv` to populate the `stocks` universe table.
-5. Navigate to **Universe Scanner** and execute a manual scan to prime the system caches.
-
-## 5. Maintenance
-- Logs rotate automatically at 10MB and are retained for 30 days.
-- Database runs `VACUUM` nightly via the scheduler.
-- To completely reset the cache, run `make clean` and delete `hfos_production.db`.
+## Deployment Risks
+- Python runtime must be available on the host/container.
+- External providers may be unavailable for some filters.
+- Alerts and AI features require configured secrets.

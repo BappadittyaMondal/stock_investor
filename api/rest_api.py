@@ -17,6 +17,7 @@ from services.alert_service import AlertService
 from database.db_manager import execute_query
 
 logger = logging.getLogger(__name__)
+MAX_BODY_BYTES = 1_000_000
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -96,6 +97,9 @@ class HFOSHandler(BaseHTTPRequestHandler):
             return
 
         content_len = int(self.headers.get("Content-Length", 0))
+        if content_len > MAX_BODY_BYTES:
+            _json_response(self, 413, {"error": "Request body too large"})
+            return
         body_raw    = self.rfile.read(content_len) if content_len else b"{}"
         try:
             body = json.loads(body_raw)

@@ -1,16 +1,15 @@
-# HFOS v5.0 — Requirements Matrix
+# HFOS v5.0 - Requirements Matrix
 
-| Requirement | Category | Status | Notes |
-|-------------|----------|--------|-------|
-| 8 Intelligence Engines | Core | Implemented | Fundamental, Technical, Risk, Sector, News, Macro, Geo, Policy |
-| Alpha Scoring Engine | Core | Implemented | Weighted scoring on 0-100 scale with inverted risk |
-| Hard Risk Gates | Core | Implemented | ASM/GSM, Pledge > 40%, Market Cap < 200Cr filters |
-| Walk-Forward Calibration | Advanced | Implemented | Sharpe-ratio optimized grid search across paper trades |
-| Paper Trading Simulation | Advanced | Implemented | Auto open/close tracking for backtesting validation |
-| Streamlit SPA Interface | UI | Implemented | Premium dark theme, multi-page routing |
-| JWT Role-Based Auth | Security | Implemented | PBKDF2 hashing, lockout logic, token blacklist |
-| SQLite WAL Database | Infrastructure| Implemented | 22 tables, thread-local connection pooling |
-| Claude AI Copilot | Intelligence | Implemented | Cost-tracked portfolio review and Q&A |
-| Alert Engine | Notifications | Implemented | Telegram / Email with automatic retry |
-| Data Validation Layer | Reliability | Implemented | Pydantic v2 schemas and pandas OHLCV checks |
-| APScheduler Automation | DevOps | Implemented | Pre/post market scans, weekend reviews, DB maintenance |
+| Requirement | Status | Implementation | Evidence |
+|---|---|---|---|
+| Streamlit institutional UI | COMPLIANT | `main.py`, `app/pages/*` | page routing and role gate present |
+| JWT + RBAC auth | COMPLIANT | `services/auth_service.py` | token, lockout, role checks implemented |
+| SQLite WAL schema | COMPLIANT | `database/schema.sql`, `database/db_manager.py` | boot path initializes schema |
+| 8-engine scoring flow | COMPLIANT | `engines/*`, `services/scanner_service.py`, `engines/scoring/alpha_engine.py` | composite alpha path exists |
+| Portfolio service and gates | COMPLIANT | `services/portfolio_service.py`, `engines/scoring/alpha_engine.py` | sizing, exposure, and entry gates present |
+| Data fetch fallback chain | COMPLIANT | `services/data_fetcher.py`, `services/screener_scraper.py` | yfinance -> nsepython -> DB cache |
+| Universal screener layer | PARTIAL | `engines/screener/universal_screener.py`, `services/universal_screener.py`, `app/pages/screener_builder.py` | dynamic logic exists; some filters depend on external data |
+| Full PDF filter coverage | PARTIAL | derived metrics added; unresolved items documented | `docs/FILTER_COVERAGE_AUDIT.md` |
+| Deployment artifacts | COMPLIANT | `Dockerfile`, `deployment/docker-compose.yml`, `Makefile`, `.env.example` | deploy files present |
+| Monitoring and audit trails | COMPLIANT | `monitoring/*`, audit tables in schema | operational reports already exist |
+| Objective verification | PARTIAL | static inspection completed; live Python test runner unavailable in this shell | remaining runtime verification documented |

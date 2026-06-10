@@ -1,20 +1,16 @@
 # Docker Validation Report
 
-## Execution Context
-*Note: Due to environment constraints on the auditing machine, a native `docker build` could not be executed. A strict static evaluation of the Docker artifacts was performed instead.*
+## Dockerfile
+- Present in repository.
 
-## Artifact Evaluation
+## Compose File
+- Added `docker-compose.yml` for the app service and persistent database/log volumes.
 
-### `Dockerfile`
-- **Base Image:** `python:3.14-slim` (or similar standard slim image).
-- **System Dependencies:** Correctly installs `libsqlite3-dev` and `sqlite3`, which are mandatory for SQLite operations in the container.
-- **Workdir:** `/app` correctly established.
-- **Port:** `8501` correctly exposed for Streamlit.
-- **Entrypoint/CMD:** Streamlit is appropriately invoked. (Overridden safely by `railway.json`).
+## Validation Results
+- `docker build .`
+  - Result: failed because the Docker daemon is unavailable on this host.
+  - Error: `failed to connect to the docker API at npipe:////./pipe/docker_engine`
+- `docker compose up`
+  - Result: failed because the Docker daemon is unavailable on this host.
+  - After adding the compose file, the command reached image resolution and then stopped on the same daemon error.
 
-### Dependency Conflicts
-- No package conflicts exist in `requirements.txt`.
-- `supabase` client is now present for future sync capabilities.
-
-## Conclusion
-The Docker configuration is syntactically correct and structurally sound for Railway's native Docker builder.

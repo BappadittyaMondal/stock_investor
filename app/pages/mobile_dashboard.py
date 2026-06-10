@@ -3,6 +3,19 @@ import streamlit as st
 from database.db_manager import execute_query
 
 def render():
+    try:
+        _render_body()
+    except Exception as _err:
+        import traceback as _tb
+        import streamlit as st
+        st.error("⚠️ This page encountered an error. Please refresh.")
+        from services.auth_service import get_current_user
+        _u = get_current_user()
+        if _u and _u.get("role") == "ADMIN":
+            with st.expander("🔧 Admin Debug: Error Details"):
+                st.code(_tb.format_exc())
+
+def _render_body():
     st.markdown("""
     <style>
         .stApp { max-width: 100vw; overflow-x: hidden; }

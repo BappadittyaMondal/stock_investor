@@ -1,0 +1,85 @@
+{
+  "version": "1.0",
+  "categories": [
+    {
+      "name": "Coffee Can",
+      "templates": [
+        {
+          "name": "True Compounders / Coffee Can Stocks",
+          "filters": {
+            "all": [
+              {"field": "roe_pct", "operator": ">=", "value": 20},
+              {"field": "roce_pct", "operator": ">=", "value": 20},
+              {"field": "debt_equity", "operator": "<=", "value": 0.5},
+              {"field": "promoter_holding", "operator": ">=", "value": 50}
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Arithmetic Expressions",
+      "templates": [
+        {
+          "name": "PAT to Revenue Efficiency",
+          "filters": {
+            "expr": {
+              "name": "PAT margin proxy",
+              "left": {"field": "pat_cr"},
+              "operator": "/",
+              "right": {"field": "revenue_cr"},
+              "compare": ">=",
+              "value": 0.08
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Quality Growth",
+      "templates": [
+        {
+          "name": "High Quality EarlyFind SIP Quality Growth Compound",
+          "filters": {
+            "all": [
+              {"field": "roce_pct", "operator": ">=", "value": 18},
+              {"field": "revenue_growth_yoy", "operator": ">=", "value": 15},
+              {"field": "pat_growth_yoy", "operator": ">=", "value": 15},
+              {"field": "cash_flow_quality_pct", "operator": ">=", "value": 80}
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Momentum",
+      "templates": [
+        {
+          "name": "High momentum - capex + volume surge",
+          "filters": {
+            "all": [
+              {"field": "fifty_two_week_index", "operator": "<=", "value": 90},
+              {"field": "volume_expansion_ratio", "operator": ">=", "value": 1.5},
+              {"field": "pat_growth_yoy", "operator": ">=", "value": 10}
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Institutional Accumulation",
+      "templates": [
+        {
+          "name": "Change holding - promoter/FII/DII holding change screen",
+          "filters": {
+            "any": [
+              {"field": "promoter_change_pct", "operator": ">", "value": 0},
+              {"field": "fii_change_pct", "operator": ">", "value": 0},
+              {"field": "dii_change_pct", "operator": ">", "value": 0}
+            ]
+          }
+        }
+      ]
+    }
+  ]
+}

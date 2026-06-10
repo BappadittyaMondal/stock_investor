@@ -42,10 +42,9 @@ PASSWORD_MIN_LENGTH: int = 12
 PBKDF2_ITERATIONS: int = 260_000
 
 # ---------------------------------------------------------------------------
-# AI / Anthropic
+# AI / Gemini
 # ---------------------------------------------------------------------------
-ANTHROPIC_API_KEY: str = os.environ.get("ANTHROPIC_API_KEY", "")
-ANTHROPIC_MODEL: str = os.environ.get("ANTHROPIC_MODEL", "claude-3-5-sonnet-20241022")
+GOOGLE_API_KEY: str = os.environ.get("GOOGLE_API_KEY", "")
 AI_DAILY_LIMIT_INR: float = float(os.environ.get("DAILY_AI_LIMIT_INR", "500"))
 AI_MONTHLY_LIMIT_INR: float = float(os.environ.get("MONTHLY_AI_LIMIT_INR", "5000"))
 CLAUDE_INR_PER_1K_IN: float = float(os.environ.get("CLAUDE_INR_PER_1K_IN", "0.25"))
@@ -120,8 +119,8 @@ def validate_critical_settings() -> list[str]:
     warnings = []
     if not JWT_SECRET or len(JWT_SECRET) < 32:
         warnings.append("HFOS_JWT_SECRET not set — auth module disabled")
-    if not ANTHROPIC_API_KEY:
-        warnings.append("ANTHROPIC_API_KEY not set — AI Copilot disabled")
+    if not GOOGLE_API_KEY:
+        warnings.append("GOOGLE_API_KEY not set — AI Copilot disabled")
     if not TELEGRAM_BOT_TOKEN:
         warnings.append("TELEGRAM_BOT_TOKEN not set — Telegram alerts disabled")
     return warnings

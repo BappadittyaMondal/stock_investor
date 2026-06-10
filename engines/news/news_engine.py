@@ -6,7 +6,17 @@ Returns news_score 0-100 (higher = more positive sentiment).
 import logging
 from datetime import datetime, timedelta
 from typing import Optional
-import feedparser
+
+try:
+    import feedparser
+except ImportError:  # pragma: no cover - optional runtime dependency
+    class _FeedParserFallback:
+        @staticmethod
+        def parse(*args, **kwargs):
+            return type("Feed", (), {"entries": []})()
+
+    feedparser = _FeedParserFallback()
+
 from database.db_manager import execute_write, execute_query
 from config.settings import (
     PIB_RSS_URL, RBI_RSS_URL, SEBI_RSS_URL

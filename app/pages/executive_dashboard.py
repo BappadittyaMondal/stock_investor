@@ -2,6 +2,19 @@
 import streamlit as st
 
 def render():
+    try:
+        _render_body()
+    except Exception as _err:
+        import traceback as _tb
+        import streamlit as st
+        st.error("⚠️ This page encountered an error. Please refresh.")
+        from services.auth_service import get_current_user
+        _u = get_current_user()
+        if _u and _u.get("role") == "ADMIN":
+            with st.expander("🔧 Admin Debug: Error Details"):
+                st.code(_tb.format_exc())
+
+def _render_body():
     st.title("👔 Executive Dashboard")
     st.caption("High-level portfolio oversight for Family Offices & PMs")
     

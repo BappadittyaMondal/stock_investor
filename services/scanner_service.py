@@ -92,11 +92,24 @@ class ScannerService:
         sym    = stock["symbol"]
         sector = stock.get("sector") or "Default"
 
-        # Fetch OHLCV (with fallback chain)
         df = self.fetcher.fetch_ohlcv(sym)
         if df is None or df.empty:
             logger.warning(f"[{sym}] No OHLCV — skipping")
             return None
+            
+        # Fetch fundamental info via yfinance if missing
+        try:
+            import yfinance as yf
+            ticker = f"{sym}.NS" if not sym.endswith(".NS") else sym
+            info = yf.Ticker(ticker).info
+            if info:
+                stock["market_cap_cr"] = info.get("marketCap", 0) / 10000000 if info.get("marketCap") else 0
+                stock["pe_ratio"] = info.get("trailingPE", 0)
+                stock["high_52w"] = info.get("fiftyTwoWeekHigh", 0)
+                stock["low_52w"] = info.get("fiftyTwoWeekLow", 0)
+        except Exception as e:
+            logger.warning(f"Failed to fetch yfinance info for {sym}: {e}")
+
 
         # Run all engines
         scores = {

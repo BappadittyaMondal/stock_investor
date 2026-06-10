@@ -1,21 +1,30 @@
-# HFOS v5.0 — Initial Audit Report
+# HFOS v5.0 - Audit Report
 
-*Based on initial codebase state (from code.pdf) vs Master Specification*
+## Snapshot Reviewed
+- Existing HFOS repository under `E:\stock_invest`
+- Available specification snapshot and current implementation snapshot
 
-## Core Infrastructure
-- **Database:** PARTIAL. Was basic SQLite. Needed WAL mode, 22-table schema, and connection pooling.
-- **Config:** PARTIAL. Hardcoded secrets existed. Needed `.env` abstraction.
+## High-Level Findings
+- Core platform architecture already exists: Streamlit UI, SQLite schema, service layer, scoring engines, scheduler, auth, and deployment files.
+- Universal screener support was incomplete before this pass; the new screener service/page and filter registry now exist.
+- The largest remaining risk is external-data completeness for filters that cannot be derived from current tables or OHLCV feeds.
+- Live runtime validation could not be executed in this shell because a usable Python interpreter is not available on PATH here.
 
-## Intelligence Engines
-- **Scoring Engine:** PARTIAL. Needed dynamic weights and walk-forward calibration.
-- **Fundamental:** PARTIAL. Needed FCF calculations and proper DB caching.
-- **Technical:** BROKEN. Needed robust `pandas-ta` integration.
-- **Risk/Sector/Macro/Geo/Policy/News:** MISSING. Entire 8-engine architecture needed to be built.
+## Areas Audited
+- Presentation layer
+- Service layer
+- Engine layer
+- Auth and API boundaries
+- Database schema and bootstrap
+- Deployment artifacts
+- Screener/filter stack
 
-## Services & UI
-- **Scanner/Portfolio Services:** PARTIAL. Missing tax logic (LTCG/STCG) and strict circuit breakers.
-- **Streamlit UI:** PARTIAL. Needed modular SPA routing and premium aesthetic overhaul.
-- **Auth:** BROKEN. Needed OWASP-hardened JWT with PBKDF2.
+## Key Issues Identified
+- `main.py` had malformed CSS and did not expose the new screener builder page.
+- REST API lacked a request-size guard.
+- Auth blacklist lookup failed open on DB errors.
+- Several PDF-style filters require source data not yet present in the schema.
 
-## Conclusion of Audit
-The original codebase provided a foundational shell but fell short of the institutional, production-grade requirements specified in the HFOS v5.0 directive. A near-complete rewrite and expansion of the engine architecture was required.
+## Outcome
+- The repository is structurally sound and already production-shaped.
+- Remaining work is mostly data coverage, runtime verification, and external-data wiring.

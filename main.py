@@ -22,13 +22,15 @@ def _boot():
     initialize_schema()
     from config.settings import validate_critical_settings
     warnings = validate_critical_settings()
-    if warnings:
-        for w in warnings:
-            st.sidebar.warning(f"⚠️ {w}")
+    # Store warnings in session state — display only AFTER login to avoid
+    # leaking internal configuration state to unauthenticated users.
+    if "boot_warnings" not in st.session_state:
+        st.session_state["boot_warnings"] = warnings or []
     from jobs.scheduler import start_scheduler
     if "scheduler_started" not in st.session_state:
         start_scheduler()
         st.session_state["scheduler_started"] = True
+
 
 
 # ---------------------------------------------------------------------------
@@ -71,6 +73,7 @@ st.markdown("""
         font-size: 0.75rem; color: #94a3b8; margin-top: 1rem;
     }
     h1, h2, h3 { color: #e2e8f0 !important; }
+    .stButton>button {
         background: linear-gradient(135deg, #2563eb, #1d4ed8);
         color: white; border: none; border-radius: 8px;
         font-weight: 600; transition: all 0.2s;
@@ -137,30 +140,51 @@ if user:
         for k in ["hfos_token","hfos_username"]:
             st.session_state.pop(k, None)
         st.rerun()
+    # Show boot warnings only to authenticated users (ADMIN only)
+    if user.get("role") == "ADMIN":
+        for w in st.session_state.get("boot_warnings", []):
+            st.sidebar.warning(f"⚠️ {w}")
 
 st.sidebar.divider()
 
 # Build nav — calibration only shown to ADMIN / PORTFOLIO_MANAGER
 _role = user.get("role", "VIEWER") if user else "VIEWER"
-PAGES = {
+
+# ── Workspace ──
+st.sidebar.caption("📊 WORKSPACE")
+WORKSPACE_PAGES = {
     "🏠 Dashboard":         "dashboard",
     "🔍 Universe Scanner":  "scanner",
     "📊 Portfolio":         "portfolio",
     "📋 Watchlists":        "watchlists",
+}
+# ── Research ──
+st.sidebar.caption("🔬 RESEARCH")
+RESEARCH_PAGES = {
     "📰 News & Sentiment":  "news",
     "💡 AI Copilot":        "ai_copilot",
     "📅 Earnings Calendar": "earnings",
     "🌐 Macro & Geo":       "macro",
+    "🧪 Research Lab":      "research_lab",
+    "🧭 Screener Builder":   "screener_builder",
+    "👔 Executive Summary": "executive",
+    "📱 Mobile App":        "mobile",
+}
+# ── System (admin) ──
+st.sidebar.caption("⚙️ SYSTEM")
+SYSTEM_PAGES = {
     "⚙️ Settings":          "settings",
     "📈 Data Freshness":    "freshness",
     "🗄️ Data Center":       "data_center",
     "⚙️ Operations Center": "operations_center",
-    "🧪 Research Lab":      "research_lab",
-    "📱 Mobile App":        "mobile",
-    "👔 Executive Summary": "executive"
 }
 if _role in ("ADMIN", "PORTFOLIO_MANAGER"):
-    PAGES["🔬 Calibration"] = "calibration"
+    SYSTEM_PAGES["🔬 Calibration"] = "calibration"
+if _role == "ADMIN":
+    SYSTEM_PAGES["👥 User Management"] = "user_management"
+    SYSTEM_PAGES["🕵️ Audit Logs"] = "audit_logs"
+
+PAGES = {**WORKSPACE_PAGES, **RESEARCH_PAGES, **SYSTEM_PAGES}
 page = st.sidebar.radio("Navigate", list(PAGES.keys()), key="nav")
 page_id = PAGES[page]
 st.sidebar.divider()
@@ -213,9 +237,18 @@ elif page_id == "operations_center":
 elif page_id == "research_lab":
     from app.pages.research_lab import render
     render()
+elif page_id == "screener_builder":
+    from app.pages.screener_builder import render
+    render()
 elif page_id == "mobile":
     from app.pages.mobile_dashboard import render
     render()
 elif page_id == "executive":
     from app.pages.executive_dashboard import render
+    render()
+elif page_id == "user_management":
+    from app.pages.user_management import render
+    render()
+elif page_id == "audit_logs":
+    from app.pages.audit_logs import render
     render()

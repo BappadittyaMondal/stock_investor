@@ -117,8 +117,9 @@ class JWTManager:
                 (jti,)
             )
             return row is not None
-        except Exception:
-            return False  # fail open — prefer usability
+        except Exception as e:
+            logger.error(f"Token blacklist lookup failed: {e}")
+            return True  # fail closed for security
 
 
 # ---------------------------------------------------------------------------
@@ -213,6 +214,9 @@ class AuthService:
     def create_user(self, username: str, email: str, password: str,
                     role: str = "VIEWER", created_by: Optional[int] = None) -> int:
         """Create new user. Returns new user_id."""
+        role = role.upper().strip()
+        if role not in PERMISSIONS:
+            raise ValueError(f"Invalid role: {role}")
         pwd_hash = self.pwd.hash_password(password)
         uid = execute_write(
             """INSERT INTO users(username,email,password_hash,role)

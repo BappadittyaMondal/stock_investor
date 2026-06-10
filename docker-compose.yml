@@ -1,0 +1,21 @@
+services:
+  hfos:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: hfos:latest
+    container_name: hfos-app
+    ports:
+      - "8501:8501"
+    environment:
+      - PYTHONUNBUFFERED=1
+      - DB_PATH=/app/database/hfos_production.db
+      - HFOS_JWT_SECRET=${HFOS_JWT_SECRET:-change-me-to-a-long-random-secret}
+    volumes:
+      - hfos-db:/app/database
+      - hfos-logs:/app/logs
+    restart: unless-stopped
+
+volumes:
+  hfos-db:
+  hfos-logs:

@@ -163,7 +163,7 @@ class ScreenerScraper:
                 if name_tag and val_tag and label.lower() in name_tag.get_text(strip=True).lower():
                     return self._to_float(val_tag.get_text(strip=True))
         except Exception:
-            pass
+            logger.debug(f"[Screener] ratio parse failed for {label}")
         return None
 
     def _shareholding(self, soup: BeautifulSoup, label: str) -> Optional[float]:
@@ -176,7 +176,7 @@ class ScreenerScraper:
                     last = cells[-1].get_text(strip=True)
                     return self._to_float(last)
         except Exception:
-            pass
+            logger.debug(f"[Screener] shareholding parse failed for {label}")
         return None
 
     def _pnl_value(self, soup: BeautifulSoup, label: str) -> Optional[float]:
@@ -191,7 +191,7 @@ class ScreenerScraper:
                             last = cells[-1].get_text(strip=True)
                             return self._to_float(last)
         except Exception:
-            pass
+            logger.debug(f"[Screener] pnl parse failed for {label}")
         return None
 
     def _yoy_growth(self, soup: BeautifulSoup, label: str) -> Optional[float]:
@@ -208,7 +208,7 @@ class ScreenerScraper:
                             if len(vals) >= 2 and vals[-2] and vals[-2] != 0:
                                 return round(((vals[-1] - vals[-2]) / abs(vals[-2])) * 100, 2)
         except Exception:
-            pass
+            logger.debug(f"[Screener] yoy parse failed for {label}")
         return None
 
     def _cf_value(self, soup: BeautifulSoup, label: str) -> Optional[float]:
@@ -223,7 +223,7 @@ class ScreenerScraper:
                             last = cells[-1].get_text(strip=True)
                             return self._to_float(last)
         except Exception:
-            pass
+            logger.debug(f"[Screener] cash flow parse failed for {label}")
         return None
 
     def _calc_fcf(self, soup: BeautifulSoup) -> Optional[float]:
@@ -234,7 +234,7 @@ class ScreenerScraper:
             if ocf is not None and capex is not None:
                 return round(ocf + capex, 2)  # capex is already negative
         except Exception:
-            pass
+            logger.debug("[Screener] FCF calculation failed")
         return None
 
     @staticmethod

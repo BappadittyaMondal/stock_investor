@@ -8,6 +8,19 @@ import plotly.express as px
 from services.scanner_service import ScannerService
 
 def render():
+    try:
+        _render_body()
+    except Exception as _err:
+        import traceback as _tb
+        import streamlit as st
+        st.error("⚠️ This page encountered an error. Please refresh.")
+        from services.auth_service import get_current_user
+        _u = get_current_user()
+        if _u and _u.get("role") == "ADMIN":
+            with st.expander("🔧 Admin Debug: Error Details"):
+                st.code(_tb.format_exc())
+
+def _render_body():
     st.title("🔍 Universe Scanner")
     st.caption("Institutional grade alpha discovery")
 
@@ -72,8 +85,20 @@ def _render_stock_detail(r: dict, sym: str):
     with hcol4: st.metric("Conviction", r.get("confidence", "N/A"))
     with hcol5: st.metric("Risk Grade", risk_grade)
     with hcol6: st.metric("Sector", r.get("sector", "Unknown"))
-    
+
     st.markdown("<br>", unsafe_allow_html=True)
+    
+    # ── FUNDAMENTALS ──
+    fcol1, fcol2, fcol3, fcol4 = st.columns(4)
+    mc = r.get("market_cap_cr")
+    pe = r.get("pe_ratio")
+    h52 = r.get("high_52w")
+    l52 = r.get("low_52w")
+    
+    with fcol1: st.metric("Market Cap", f"₹{mc:,.0f} Cr" if mc else "N/A")
+    with fcol2: st.metric("PE Ratio", f"{pe:.1f}" if pe else "N/A")
+    with fcol3: st.metric("52W High", f"₹{h52:,.2f}" if h52 else "N/A")
+    with fcol4: st.metric("52W Low", f"₹{l52:,.2f}" if l52 else "N/A")
     
     # ── QUICK DECISION BOX & PORTFOLIO FIT ─────────────────────────────────
     dc1, dc2 = st.columns([2, 1])
@@ -90,7 +115,6 @@ def _render_stock_detail(r: dict, sym: str):
         """, unsafe_allow_html=True)
         
     with dc2:
-        # Mock Portfolio Fit (In a real system, calculate sector correlation)
         st.markdown(f"""
         <div style="background: #1a2035; border: 1px solid #2d3f6e; padding: 20px; border-radius: 8px; text-align: center;">
             <p style="color: #94a3b8; margin: 0;">Portfolio Fit Score</p>
@@ -122,7 +146,6 @@ def _render_stock_detail(r: dict, sym: str):
 
     with ec2:
         st.markdown("### ⚠️ Risk Panel")
-        # In a real system these come from the RiskEngine/DB. Mocking display UI.
         st.markdown("""
         <table style="width: 100%; border-collapse: collapse;">
             <tr style="border-bottom: 1px solid #2d3f6e;"><td style="padding: 10px 0;">ASM Flag</td><td style="text-align: right; color: #00ff88;">Clear</td></tr>

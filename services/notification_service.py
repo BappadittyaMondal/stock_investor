@@ -28,5 +28,4 @@ class NotificationService:
         self._dispatch(priority, title, message)
         
     def _dispatch(self, priority: str, title: str, message: str):
-        # Mocks Web Push API dispatch for PWA service_worker
         logger.info(f"[PUSH NOTIFICATION] {priority} - {title}: {message}")

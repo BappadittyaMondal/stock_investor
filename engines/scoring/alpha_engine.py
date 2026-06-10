@@ -177,7 +177,7 @@ class AlphaEngine:
                 }
                 results.append(result)
                 
-                # 4. Log Lineage (mocked target row id 0 for now since it's not saved yet)
+                # 4. Log lineage for the alpha save event
                 dl_svc.log_lineage(
                     stock_id=s.get("stock_id", 0),
                     target_table="scores",

@@ -1,6 +1,7 @@
 """HFOS v5.0 — Watchlists Page
 Tabbed card-based UI.
 """
+import html
 import streamlit as st
 from repositories.watchlist_repository import WatchlistRepository
 from repositories.stock_repository import StockRepository
@@ -14,6 +15,19 @@ TIER_LABELS = {
 }
 
 def render():
+    try:
+        _render_body()
+    except Exception as _err:
+        import traceback as _tb
+        st.error("⚠️ Watchlists encountered an error. Please refresh the page.")
+        from services.auth_service import get_current_user
+        _u = get_current_user()
+        if _u and _u.get("role") == "ADMIN":
+            with st.expander("🔧 Admin Debug: Error Details"):
+                st.code(_tb.format_exc())
+
+
+def _render_body():
     st.title("📋 Watchlists")
     st.caption("Active monitoring for immediate execution.")
     
@@ -33,10 +47,11 @@ def render():
                 # Build Card-based UI
                 for item in items:
                     sym = item["symbol"]
-                    sector = item.get("sector", "Unknown")
-                    cap = item.get("market_cap_cr", 0)
-                    added = item.get("added_at", "").split(" ")[0]
-                    notes = item.get("notes", "") or "No notes provided."
+                    sector = item.get("sector", "Unknown") or "Unknown"
+                    cap = item.get("market_cap_cr")
+                    cap_str = f"₹{cap:,.0f} Cr" if cap is not None else "₹N/A"
+                    added = (item.get("added_at", "") or "").split(" ")[0]
+                    notes = html.escape(item.get("notes", "") or "No notes provided.")
                     
                     st.markdown(f"""
                     <div style="background: #1a2035; border: 1px solid #2d3f6e; border-left: 5px solid {color}; padding: 15px; border-radius: 8px; margin-bottom: 10px;">
@@ -46,7 +61,7 @@ def render():
                         </div>
                         <p style="margin: 5px 0 10px 0; color: #94a3b8; font-size: 0.9rem;">{notes}</p>
                         <div style="display: flex; gap: 15px; font-size: 0.8rem; color: #64748b;">
-                            <span>Mkt Cap: ₹{cap:,.0f} Cr</span>
+                            <span>Mkt Cap: {cap_str}</span>
                             <span>Added: {added}</span>
                         </div>
                     </div>

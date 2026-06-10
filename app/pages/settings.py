@@ -11,8 +11,23 @@ from config.settings import (
 )
 from repositories.stock_repository import StockRepository
 
+from services.auth_service import require_role
 
+@require_role("ADMIN")
 def render():
+    try:
+        _render_body()
+    except Exception as _err:
+        import traceback as _tb
+        import streamlit as st
+        st.error("⚠️ This page encountered an error. Please refresh.")
+        from services.auth_service import get_current_user
+        _u = get_current_user()
+        if _u and _u.get("role") == "ADMIN":
+            with st.expander("🔧 Admin Debug: Error Details"):
+                st.code(_tb.format_exc())
+
+def _render_body():
     st.title("⚙️ Settings")
     st.info("Settings are managed via environment variables. Edit your `.env` file to change values.")
 

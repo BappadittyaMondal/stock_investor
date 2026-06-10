@@ -6,9 +6,86 @@ Uses pandas-ta for all TA calculations.
 import logging
 
 import pandas as pd
-import pandas_ta as ta
+
+try:
+    import pandas_ta as ta  # type: ignore
+except Exception:  # pragma: no cover - fallback path for environments without pandas_ta
+    ta = None
 
 logger = logging.getLogger(__name__)
+
+
+class _FallbackTA:
+    """Minimal internal TA fallback for runtime environments without pandas_ta."""
+
+    @staticmethod
+    def ema(close: pd.Series, length: int):
+        return close.ewm(span=length, adjust=False).mean()
+
+    @staticmethod
+    def rsi(close: pd.Series, length: int):
+        delta = close.diff()
+        gain = delta.clip(lower=0).ewm(alpha=1 / length, adjust=False).mean()
+        loss = (-delta.clip(upper=0)).ewm(alpha=1 / length, adjust=False).mean()
+        rs = gain / loss.replace(0, pd.NA)
+        return 100 - (100 / (1 + rs))
+
+    @staticmethod
+    def macd(close: pd.Series, fast: int = 12, slow: int = 26, signal: int = 9):
+        ema_fast = close.ewm(span=fast, adjust=False).mean()
+        ema_slow = close.ewm(span=slow, adjust=False).mean()
+        macd_line = ema_fast - ema_slow
+        signal_line = macd_line.ewm(span=signal, adjust=False).mean()
+        hist = macd_line - signal_line
+        return pd.DataFrame(
+            {
+                f"MACD_{fast}_{slow}_{signal}": macd_line,
+                f"MACDs_{fast}_{slow}_{signal}": signal_line,
+                f"MACDh_{fast}_{slow}_{signal}": hist,
+            }
+        )
+
+    @staticmethod
+    def obv(close: pd.Series, volume: pd.Series):
+        direction = close.diff().fillna(0).apply(lambda x: 1 if x > 0 else (-1 if x < 0 else 0))
+        return (direction * volume.fillna(0)).cumsum()
+
+    @staticmethod
+    def adx(high: pd.Series, low: pd.Series, close: pd.Series, length: int = 14):
+        # Lightweight proxy using directional movement ratio.
+        up = high.diff()
+        down = -low.diff()
+        plus_dm = up.where((up > down) & (up > 0), 0.0)
+        minus_dm = down.where((down > up) & (down > 0), 0.0)
+        tr = pd.concat(
+            [
+                high - low,
+                (high - close.shift()).abs(),
+                (low - close.shift()).abs(),
+            ],
+            axis=1,
+        ).max(axis=1)
+        atr = tr.ewm(alpha=1 / length, adjust=False).mean().replace(0, pd.NA)
+        plus_di = 100 * plus_dm.ewm(alpha=1 / length, adjust=False).mean() / atr
+        minus_di = 100 * minus_dm.ewm(alpha=1 / length, adjust=False).mean() / atr
+        dx = ((plus_di - minus_di).abs() / (plus_di + minus_di).replace(0, pd.NA)) * 100
+        adx = dx.ewm(alpha=1 / length, adjust=False).mean()
+        return pd.DataFrame({f"ADX_{length}": adx})
+
+    @staticmethod
+    def atr(high: pd.Series, low: pd.Series, close: pd.Series, length: int = 14):
+        tr = pd.concat(
+            [
+                high - low,
+                (high - close.shift()).abs(),
+                (low - close.shift()).abs(),
+            ],
+            axis=1,
+        ).max(axis=1)
+        return tr.ewm(alpha=1 / length, adjust=False).mean()
+
+
+ta = ta or _FallbackTA()
 
 
 class TechnicalEngine:
@@ -23,7 +100,7 @@ class TechnicalEngine:
     """
 
     def __init__(self):
-        pass
+        logger.debug("TechnicalEngine initialized")
 
     def score(self, df: pd.DataFrame, symbol: str = "UNKNOWN") -> float:
         """

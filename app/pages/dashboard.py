@@ -6,7 +6,44 @@ import streamlit as st
 import pandas as pd
 from database.db_manager import execute_query, execute_one
 
+@st.cache_data(ttl=300)
+def get_cached_geo_risk():
+    return execute_one("SELECT COUNT(*) as c FROM geo_events WHERE severity IN ('CRITICAL','HIGH')")
+
+@st.cache_data(ttl=300)
+def get_cached_recent_scores():
+    return execute_query(
+        """SELECT s.symbol, sc.signal, sc.alpha_score 
+           FROM scores sc JOIN stocks s ON sc.stock_id=s.id
+           WHERE sc.scored_at >= date('now', '-3 day')
+           ORDER BY sc.alpha_score DESC"""
+    )
+
+@st.cache_data(ttl=300)
+def get_cached_leaderboard():
+    return execute_query(
+        """SELECT s.symbol as Ticker, s.name as Company, sc.alpha_score as "Alpha Score",
+                  sc.confidence as Conviction, s.sector as Sector,
+                  (sc.fundamental_score + sc.technical_score)/2 as "Base Edge"
+           FROM scores sc JOIN stocks s ON sc.stock_id=s.id
+           WHERE sc.scored_at >= date('now', '-3 day')
+           ORDER BY sc.alpha_score DESC LIMIT 50"""
+    )
+
 def render():
+    try:
+        _render_body()
+    except Exception as _err:
+        import traceback as _tb
+        st.error("⚠️ Dashboard encountered an error. Please refresh the page.")
+        from services.auth_service import get_current_user
+        _u = get_current_user()
+        if _u and _u.get("role") == "ADMIN":
+            with st.expander("🔧 Admin Debug: Error Details"):
+                st.code(_tb.format_exc())
+
+
+def _render_body():
     st.title("🏛️ Market Command Center")
     st.caption("Decision velocity optimized. What matters right now.")
 
@@ -16,7 +53,7 @@ def render():
     
     # In a real scenario, these would pull from MacroEngine/DB.
     # For now, we simulate the state from recent data or defaults.
-    geo_risk = execute_one("SELECT COUNT(*) as c FROM geo_events WHERE severity IN ('CRITICAL','HIGH')")
+    geo_risk = get_cached_geo_risk()
     risk_state = "🟡 Neutral" if not geo_risk or geo_risk["c"] == 0 else "🔴 Risk-Off"
     
     with col1:
@@ -36,12 +73,7 @@ def render():
     st.subheader("⚡ Action Matrix")
     
     # Fetch recent scored stocks for the matrix
-    recent_scores = execute_query(
-        """SELECT s.symbol, sc.signal, sc.alpha_score 
-           FROM scores sc JOIN stocks s ON sc.stock_id=s.id
-           WHERE sc.scored_at >= date('now', '-3 day')
-           ORDER BY sc.alpha_score DESC"""
-    )
+    recent_scores = get_cached_recent_scores()
     
     df_actions = pd.DataFrame([dict(r) for r in recent_scores]) if recent_scores else pd.DataFrame(columns=["symbol","signal","alpha_score"])
     
@@ -50,30 +82,30 @@ def render():
     with c_buy:
         st.markdown("### 🟢 BUY NOW")
         buys = df_actions[df_actions["signal"].isin(["STRONG_BUY", "BUY"])].head(10)
-        for _, row in buys.iterrows():
-            st.button(f"{row['symbol']} ({row['alpha_score']})", key=f"b_{row['symbol']}", use_container_width=True)
+        for idx, (_, row) in enumerate(buys.iterrows()):
+            st.button(f"{row['symbol']} ({row['alpha_score']})", key=f"b_{row['symbol']}_{idx}", use_container_width=True)
         if buys.empty: st.caption("No immediate buys.")
             
     with c_watch:
         st.markdown("### 🟡 WATCH")
         watches = df_actions[df_actions["signal"] == "ACCUMULATE"].head(10)
-        for _, row in watches.iterrows():
-            st.button(f"{row['symbol']} ({row['alpha_score']})", key=f"w_{row['symbol']}", use_container_width=True)
+        for idx, (_, row) in enumerate(watches.iterrows()):
+            st.button(f"{row['symbol']} ({row['alpha_score']})", key=f"w_{row['symbol']}_{idx}", use_container_width=True)
         if watches.empty: st.caption("No watch items.")
 
     with c_reduce:
         st.markdown("### 🟠 REDUCE")
         # For simulation, REDUCE might be WATCH or lower for things we hold
         reduces = df_actions[df_actions["signal"] == "WATCH"].head(10)
-        for _, row in reduces.iterrows():
-            st.button(f"{row['symbol']} ({row['alpha_score']})", key=f"r_{row['symbol']}", use_container_width=True)
+        for idx, (_, row) in enumerate(reduces.iterrows()):
+            st.button(f"{row['symbol']} ({row['alpha_score']})", key=f"r_{row['symbol']}_{idx}", use_container_width=True)
         if reduces.empty: st.caption("Nothing to reduce.")
             
     with c_avoid:
         st.markdown("### 🔴 AVOID")
         avoids = df_actions[df_actions["signal"] == "REJECT"].head(10)
-        for _, row in avoids.iterrows():
-            st.button(f"{row['symbol']} ({row['alpha_score']})", key=f"a_{row['symbol']}", use_container_width=True)
+        for idx, (_, row) in enumerate(avoids.iterrows()):
+            st.button(f"{row['symbol']} ({row['alpha_score']})", key=f"a_{row['symbol']}_{idx}", use_container_width=True)
         if avoids.empty: st.caption("No avoids listed.")
 
     st.divider()
@@ -81,14 +113,7 @@ def render():
     # ── 3. ALPHA LEADERBOARD ───────────────────────────────────────────────
     st.subheader("🏆 Alpha Leaderboard")
     
-    leaderboard = execute_query(
-        """SELECT s.symbol as Ticker, s.name as Company, sc.alpha_score as "Alpha Score",
-                  sc.confidence as Conviction, s.sector as Sector,
-                  (sc.fundamental_score + sc.technical_score)/2 as "Base Edge"
-           FROM scores sc JOIN stocks s ON sc.stock_id=s.id
-           WHERE sc.scored_at >= date('now', '-3 day')
-           ORDER BY sc.alpha_score DESC LIMIT 50"""
-    )
+    leaderboard = get_cached_leaderboard()
     
     if leaderboard:
         df_lb = pd.DataFrame([dict(r) for r in leaderboard])
